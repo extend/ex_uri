@@ -25,6 +25,9 @@
 %% ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 %% POSSIBILITY OF SUCH DAMAGE.
 
+%% @type uri() = #ex_uri{}.
+%% @type ref() = #ex_uri_ref{} | uri().
+
 -module(ex_uri).
 -include("ex_uri.hrl").
 
@@ -35,17 +38,17 @@
          encode/1,
          encode_pct/2]).
 
-%% @spec decode(string()) -> {ok, #ex_uri{}, string()}
+%% @spec decode(string()) -> {ok, uri(), string()}
 %% @doc Decode an URI.
 decode(String) ->
   {ok, _URI, _Rest} = ex_uri_parser:decode('URI', String).
 
-%% @spec decode_ref(string()) -> {ok, #ex_uri{} | #ex_uri_ref{}, string()}
+%% @spec decode_ref(string()) -> {ok, ref(), string()}
 %% @doc Decode an URI reference.
 decode_ref(String) ->
   {ok, _Ref, _Rest} = ex_uri_parser:decode('URI-reference', String).
 
-%% @spec decode_abs(string()) -> {ok, #ex_uri{}, string()}
+%% @spec decode_abs(string()) -> {ok, uri(), string()}
 %% @doc Decode an absolute URI.
 decode_abs(String) ->
   {ok, _URI, _Rest} = ex_uri_parser:decode('absolute-URI', String).
@@ -55,7 +58,7 @@ decode_abs(String) ->
 decode_pct(String) ->
   decode_pct(String, []).
 
-%% @spec encode(Value :: #ex_uri{} | #ex_uri_ref{}) -> string()
+%% @spec encode(Value :: uri() | ref()) -> string()
 %% @doc Encode an URI or an URI reference.
 encode(#ex_uri{scheme = Scheme, authority = Authority, path = Path,
                q = Query, fragment = Fragment}) ->
