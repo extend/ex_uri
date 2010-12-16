@@ -1,0 +1,11 @@
+{application, ex_uri,
+ [
+  {description, "An URI-handling library application"},
+  {vsn, "1.0.0"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {env, []}
+ ]}.
