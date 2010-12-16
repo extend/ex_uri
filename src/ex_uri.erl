@@ -33,20 +33,20 @@
          decode_abs/1,
          decode_pct/1]).
 
-%% @spec decode(string()) -> #ex_uri{}
+%% @spec decode(string()) -> {ok, #ex_uri{}, string()}
 %% @doc Decode an URI.
 decode(String) ->
-  ex_uri_parser:decode('URI', String).
+  {ok, _URI, _Rest} = ex_uri_parser:decode('URI', String).
 
-%% @spec decode_ref(string()) -> #ex_uri{} | #ex_uri_ref{}
+%% @spec decode_ref(string()) -> {ok, #ex_uri{} | #ex_uri_ref{}, string()}
 %% @doc Decode an URI reference.
 decode_ref(String) ->
-  ex_uri_parser:decode('URI-reference', String).
+  {ok, _Ref, _Rest} = ex_uri_parser:decode('URI-reference', String).
 
-%% @spec decode_abs(string()) -> #ex_uri{}
+%% @spec decode_abs(string()) -> {ok, #ex_uri{}, string()}
 %% @doc Decode an absolute URI.
 decode_abs(String) ->
-  ex_uri_parser:decode('absolute-URI', String).
+  {ok, _URI, _Rest} = ex_uri_parser:decode('absolute-URI', String).
 
 %% @spec decode_pct(string()) -> string()
 %% @doc Decode a percent-encoded string.
