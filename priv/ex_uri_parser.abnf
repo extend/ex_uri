@@ -115,33 +115,24 @@ path = path-abempty
      / path-empty
 
 path-abempty = *( "/" segment ) :
-  case _YY of
-    [] -> _YY;
-    [[$/, ""] | Segments] -> ["/" | [ Segment || [$/, Segment] <- Segments ]];
-    _YY -> ["/" | [ Segment || [$/, Segment] <- _YY ]] end.
+  lists:flatten(_YY).
 
 path-absolute = "/" [ segment-nz *( "/" segment ) ] :
-  Segments = case _YY2 of
-               [] -> _YY2;
-               [[SegmentNz, Segments1]] -> [[$/, SegmentNz] | Segments1] end,
-  ["/" | [ Segment || [$/, Segment] <- Segments ]].
+  lists:flatten(_YY).
 
 path-noscheme = segment-nz-nc *( "/" segment ) :
-  [_YY1 | [ Segment || [$/, Segment] <- _YY2 ]].
+  lists:flatten(_YY).
 
 path-rootless = segment-nz *( "/" segment ) :
-  [_YY1 | [ Segment || [$/, Segment] <- _YY2 ]].
+  lists:flatten(_YY).
 
 path-empty = 0pchar
 
-segment = *pchar :
-  lists:flatten(_YY).
+segment = *pchar
 
-segment-nz = 1*pchar :
-  lists:flatten(_YY).
+segment-nz = 1*pchar
 
-segment-nz-nc = 1*( unreserved / pct-encoded / sub-delims / "@" ) :
-  lists:flatten(_YY).
+segment-nz-nc = 1*( unreserved / pct-encoded / sub-delims / "@" )
 
 query = *( pchar / "/" / "?" ) :
   lists:flatten(_YY).
