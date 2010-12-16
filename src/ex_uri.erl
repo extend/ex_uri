@@ -30,7 +30,8 @@
 
 -export([decode/1,
          decode_ref/1,
-         decode_abs/1]).
+         decode_abs/1,
+         decode_pct/1]).
 
 %% @spec decode(string()) -> #ex_uri{}
 %% @doc Decode an URI.
@@ -46,3 +47,17 @@ decode_ref(String) ->
 %% @doc Decode an absolute URI.
 decode_abs(String) ->
   ex_uri_parser:decode('absolute-URI', String).
+
+%% @spec decode_pct(string()) -> string()
+%% @doc Decode a percent-encoded string.
+decode_pct(String) ->
+  decode_pct(String, []).
+
+
+%% @hidden
+decode_pct([C | String], Acc) when C =/= $% ->
+  decode_pct(String, [C | Acc]);
+decode_pct([$%, D1, D2 | String], Acc) ->
+  decode_pct(String, [erlang:list_to_integer([D1, D2], 16) | Acc]);
+decode_pct([], Acc) ->
+  lists:reverse(Acc).
