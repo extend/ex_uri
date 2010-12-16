@@ -31,7 +31,9 @@
 -export([decode/1,
          decode_ref/1,
          decode_abs/1,
-         decode_pct/1]).
+         decode_pct/1,
+         encode/1,
+         encode_pct/2]).
 
 %% @spec decode(string()) -> {ok, #ex_uri{}, string()}
 %% @doc Decode an URI.
@@ -53,6 +55,20 @@ decode_abs(String) ->
 decode_pct(String) ->
   decode_pct(String, []).
 
+%% @spec encode(Value :: #ex_uri{} | #ex_uri_ref{}) -> string()
+%% @doc Encode an URI or an URI reference.
+encode(#ex_uri{scheme = Scheme, authority = Authority, path = Path,
+               q = Query, fragment = Fragment}) ->
+  Acc = [$:, Scheme],
+  encode(Authority, Path, Query, Fragment, Acc);
+encode(#ex_uri_ref{authority = Authority, path = Path, q = Query,
+                   fragment = Fragment}) ->
+  encode(Authority, Path, Query, Fragment, []).
+
+%% @spec encode_pct(string(), [char()]) -> string()
+%% @doc Percent-encode a given set of chars in a string.
+encode_pct(String, Chars) ->
+  encode_pct(String, Chars, []).
 
 %% @hidden
 decode_pct([C | String], Acc) when C =/= $% ->
@@ -61,3 +77,53 @@ decode_pct([$%, D1, D2 | String], Acc) ->
   decode_pct(String, [erlang:list_to_integer([D1, D2], 16) | Acc]);
 decode_pct([], Acc) ->
   lists:reverse(Acc).
+
+%% @spec encode(#ex_uri_authority{} | undefined,
+%%              string(),
+%%              string() | undefined,
+%%              string() | undefined,
+%%              string()) -> string()
+encode(Authority, Path, Query, Fragment, Acc) ->
+  Acc1 = case Authority of
+           undefined -> Acc;
+           A -> encode_authority(A, [$/, $/ | Acc]) end,
+  Acc2 = [Path | Acc1],
+  Acc3 = case Query of
+           undefined -> Acc2;
+           Q -> [Q, $? | Acc2] end,
+  Acc4 = case Fragment of
+           undefined -> Acc3;
+           F -> [F, $# | Acc3] end,
+  lists:flatten(lists:reverse(Acc4)).
+
+%% @spec encode_authority(Authority :: #ex_uri_authority{},
+%%                        string()) -> string()
+encode_authority(#ex_uri_authority{userinfo = UserInfo,
+                                   host = Host,
+                                   port = Port}, Acc) ->
+  Acc1 = case UserInfo of
+           undefined -> Acc;
+           UI -> [$@, UI | Acc] end,
+  Acc2 = encode_host(Host, Acc1),
+  case Port of
+    undefined -> Acc2;
+    P -> [integer_to_list(P), $: | Acc2] end.
+
+%% @spec encode_host(Value :: string() | inet:ip_address(),
+%%                   string()) -> string()
+encode_host(Host, Acc) when is_list(Host) ->
+  [Host | Acc];
+encode_host({ip, Version, Data}, Acc) ->
+  [[$[, $v, erlang:integer_to_list(Version, 16), $:, Data, $]] | Acc];
+encode_host(Address = {_A, _B, _C, _D}, Acc) ->
+  [inet_parse:ntoa(Address) | Acc];
+encode_host(Address, Acc) ->
+  [[$[, inet_parse:ntoa(Address), $]] | Acc].
+
+%% @hidden
+encode_pct([C | String], Chars, Acc) ->
+  case lists:member(C, Chars) of
+    true ->
+      [D1, D2] = erlang:integer_to_list(C, 16),
+      encode_pct(String, Chars, [D2, D1, $% | Acc]);
+    false -> encode_pct(String, Chars, [C | Acc]) end.
