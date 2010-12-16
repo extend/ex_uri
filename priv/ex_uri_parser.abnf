@@ -60,7 +60,7 @@ authority = [ userinfo "@" ] host [ ":" port ] :
   Port = case _YY3 of
            [] -> undefined;
            [[$:, Port1]] -> Port1 end,
-  #ex_authority{userinfo = UserInfo, host = _YY2, port = Port}.
+  #ex_uri_authority{userinfo = UserInfo, host = _YY2, port = Port}.
 
 userinfo = *( unreserved / pct-encoded / sub-delims / ":" ) :
   lists:flatten(_YY).
