@@ -1,5 +1,5 @@
 -record(ex_uri_authority, {userinfo :: string(),
-                           host :: string() | inet:ip_address(),
+                           host :: string(),
                            port :: integer()}).
 
 -record(ex_uri, {scheme :: string(),

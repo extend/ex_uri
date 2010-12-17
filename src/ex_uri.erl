@@ -107,21 +107,10 @@ encode_authority(#ex_uri_authority{userinfo = UserInfo,
   Acc1 = case UserInfo of
            undefined -> Acc;
            UI -> [$@, UI | Acc] end,
-  Acc2 = encode_host(Host, Acc1),
+  Acc2 = [Host | Acc1],
   case Port of
     undefined -> Acc2;
     P -> [integer_to_list(P), $: | Acc2] end.
-
-%% @spec encode_host(Value :: string() | inet:ip_address(),
-%%                   string()) -> string()
-encode_host(Host, Acc) when is_list(Host) ->
-  [Host | Acc];
-encode_host({ip, Version, Data}, Acc) ->
-  [[$[, $v, erlang:integer_to_list(Version, 16), $:, Data, $]] | Acc];
-encode_host(Address = {_A, _B, _C, _D}, Acc) ->
-  [inet_parse:ntoa(Address) | Acc];
-encode_host(Address, Acc) ->
-  [[$[, inet_parse:ntoa(Address), $]] | Acc].
 
 %% @hidden
 encode_pct([C | String], Chars, Acc) ->
