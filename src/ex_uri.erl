@@ -30,6 +30,7 @@
 
 -module(ex_uri).
 -include("ex_uri.hrl").
+-include_lib("eunit/include/eunit.hrl").
 
 -export([decode/1,
          decode_ref/1,
@@ -119,3 +120,33 @@ encode_pct([C | String], Chars, Acc) ->
       [D1, D2] = erlang:integer_to_list(C, 16),
       encode_pct(String, Chars, [D2, D1, $% | Acc]);
     false -> encode_pct(String, Chars, [C | Acc]) end.
+
+
+-ifdef(TEST).
+
+%% @hidden
+simple_uris() ->
+  [{"foo://example.com:8042/over/there?name=ferret#nose",
+    #ex_uri{scheme = "foo",
+            authority = #ex_uri_authority{host = "example.com",
+                                          port = 8042},
+            path = "/over/there", q = "name=ferret",
+            fragment = "nose"}},
+   {"urn:example:animal:ferret:nose",
+    #ex_uri{scheme = "urn", path = "example:animal:ferret:nose"}}].
+
+-endif.
+
+%% @hidden
+decode_test_() ->
+  Test = fun (String, URI) ->
+               fun () ->
+                     {ok, URI, ""} = decode(String) end end,
+  [ Test(String, URI) || {String, URI} <- simple_uris() ].
+
+%% @hidden
+encode_test_() ->
+  Test = fun (String, URI) ->
+               fun () ->
+                     String = encode(URI) end end,
+  [ Test(String, URI) || {String, URI} <- simple_uris() ].
