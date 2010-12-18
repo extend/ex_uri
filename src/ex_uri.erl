@@ -129,10 +129,18 @@ resolve(#ex_uri_ref{authority = RA, path = RP, q = RQ, fragment = RF},
                                        RQ -> RQ end,
                                [BP, TQ1];
                              RP ->
+                               BP1 = case BP of
+                                       "" when BA =/= undefined -> "/";
+                                       BP -> BP end,
                                TP1 = case RP of
                                        [$/ | _] -> RP;
-                                       RP -> merge(RP, BP) end,
-                               [remove_dot_segments(TP1), RQ] end,
+                                       RP -> merge(RP, BP1) end,
+                               TP2 = remove_dot_segments(TP1),
+                               TP3 = case TP2 of
+                                       "//" ++ _ when BA =:= undefined ->
+                                         "/." ++ TP2;
+                                       TP2 -> TP2 end,
+                               [TP3, RQ] end,
                      [BA | Acc];
                    RA ->
                      [RA, remove_dot_segments(RP), RQ] end,
@@ -170,14 +178,11 @@ merge(Rel, [], _Last, Acc) ->
 remove_dot_segments1("/" ++ Path) ->
   remove_dot_segments1(Path, "/", "");
 remove_dot_segments1(Path) ->
-  remove_dot_segments1(Path, "", "").
+  remove_dot_segments1(Path, ".", "").
 
 %% @hidden
 remove_dot_segments1("", Prefix, Acc) ->
-  Acc1 = Prefix ++ lists:reverse(Acc),
-  case Acc1 of
-    "//" ++ _ -> Prefix ++ [$. | Acc1];
-    _ -> Acc1 end;
+  remove_dot_segments2(lists:reverse(Acc), Prefix);
 remove_dot_segments1(Path, Prefix, Acc) ->
   Pred = fun (C) -> C =/= $/ end,
   {S, R} = case lists:splitwith(Pred, Path) of
@@ -193,6 +198,15 @@ remove_dot_segments1(Path, Prefix, Acc) ->
       remove_dot_segments1(R, Prefix, lists:dropwhile(Pred, Acc2));
     true ->
       remove_dot_segments1(R, Prefix, lists:reverse(S, Acc)) end.
+
+remove_dot_segments2(Path = "//" ++ _, ".") ->
+  "." ++ Path;
+remove_dot_segments2("/" ++ Path, ".") ->
+  Path;
+remove_dot_segments2(Path, ".") ->
+  Path;
+remove_dot_segments2(Path, "/") ->
+  "/" ++ Path.
 
 
 -ifdef(TEST).
@@ -231,7 +245,9 @@ resolve_test_() ->
   Base3 = "http://a/b/c/d;p=1/2?q",
   Base4 = "fred:///s//a/b/c",
   Base5 = "http:///s//a/b/c",
-  Data = [% http://tools.ietf.org/html/rfc3986#section-5.4.1
+  Data = [{".//a", "b://c", "b://c//a"},
+          {"/.//a", "b:", "b:/.//a"},
+          % http://tools.ietf.org/html/rfc3986#section-5.4.1
           {"g:h", Base1, "g:h"},
           {"g", Base1, "http://a/b/c/g"},
           {"./g", Base1, "http://a/b/c/g"},
